@@ -1,31 +1,35 @@
 #include<stdio.h>
 #define MAX_SIZE 10000
 
+int errorCode = 0;
+
 struct stack {
-    int opTop;
-    int numTop;
-    char operation[MAX_SIZE];
+    int operatorStackTop;
+    int numberStackTop;
+    char operator[MAX_SIZE];
     int numbers[MAX_SIZE];
 };
 
-void initialize(struct stack *st) {
-    st->opTop = -1;
-    st->numTop = -1;
+void initializeStack(struct stack *st) {
+    st->operatorStackTop = -1;
+    st->numberStackTop = -1;
 }
 
 void pushNum(struct stack *st, int num) {
-    if(st->numTop+1 == MAX_SIZE) return;
-    st->numTop++;
-    st->numbers[st->numTop] = num;
+    if(st->numberStackTop+1 == MAX_SIZE){ 
+        errorCode = 3;
+        return;
+    }
+    st->numberStackTop++;
+    st->numbers[st->numberStackTop] = num;
 }
 
 int check(struct stack *st, char ch) {
-    if(st->opTop == -1) return 0;
+    if(st->operatorStackTop == -1) return 0;
 
-    switch(st->operation[st->opTop]) {
+    switch(st->operator[st->operatorStackTop]) {
         case '/':
-            if(ch != '*') return 1;
-            return 0;
+            return 1;
         case '*':
             if(ch != '/') return 1;
             return 0;
@@ -34,29 +38,34 @@ int check(struct stack *st, char ch) {
 
 }
 
-int popNum(struct stack *st) {
-    if(st->numTop == -1) return 0;
+int popFromNumStack(struct stack *st) {
+    if(st->numberStackTop == -1) return 0;
+    if(st->numberStackTop == MAX_SIZE) {
+        errorCode = 3;
+        return 0;
+    }
 
-    int temp = st->numbers[st->numTop];
-    st->numTop--;
+    int temp = st->numbers[st->numberStackTop];
+    st->numberStackTop--;
     return temp;
 
 }
 
-char popOp(struct stack *st) {
-    if(st->opTop == -1) return 0;
+char popFromOperatorStack(struct stack *st) {
+    if(st->operatorStackTop == -1) return 0;
 
-    char temp = st->operation[st->opTop];
-    st->opTop--;
+    char temp = st->operator[st->operatorStackTop];
+    st->operatorStackTop--;
     return temp;
 
 }
 
-int perform(struct stack *st) {
-    int num2 = popNum(st);
-    int num1 = popNum(st);
+void performOpration(struct stack *st) {
+    int num2 = popFromNumStack(st);
+    int num1 = popFromNumStack(st);
+    if(errorCode != 0) return;
     int ans;
-    char oper = popOp(st);
+    char oper = popFromOperatorStack(st);
     switch(oper) {
         case '+':
             ans = num1+num2;
@@ -69,39 +78,37 @@ int perform(struct stack *st) {
             break;
         case '/':
             if(num2 == 0) {
-                printf("Error: Divisible by zero\n");
-                return 0;
+                errorCode = 2;
+                return;
             }
             ans = num1/num2;
             break;
     }
     pushNum(st, ans);
-    return 1;
 }
 
-int pushOp(struct stack *st, char op) {
-    if(st->opTop == MAX_SIZE) return 0;
-    int possible = 1;
-    if(check(st, op)) {
-        possible = perform(st);
+void pushInOpratorStack(struct stack *st, char op) {
+    if(st->operatorStackTop == MAX_SIZE) {
+        errorCode = 3;
+        return;
     }
-    st->opTop++;
-    st->operation[st->opTop] = op;
-    return possible;
+    if(check(st, op)) {
+        performOpration(st);
+    }
+    st->operatorStackTop++;
+    st->operator[st->operatorStackTop] = op;
 }
-
 
 int main() {
-    char expression[100000];
-    scanf("%[^\n]%*c", expression);
+    int n = 10000;
+    char expression[n];
+    fgets(expression, n, stdin);
     struct stack st;
-    initialize(&st);
-    int i = 0;
-    int num = 0;
-    int possible = 1, pushed = 0;
+    initializeStack(&st);
+    int i = 0,  num = 0, pushed = 0;
     char last = 'a';
     while(expression[i] == ' ') i++;
-    while(expression[i] != '\0' && possible) {
+    while(expression[i] != '\0' && expression[i] != '\n' && errorCode == 0) {
         if(expression[i] >= '0' && expression[i] <= '9') {
             num *= 10;
             num += (expression[i] - '0');
@@ -110,34 +117,33 @@ int main() {
         }
         else if(expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/') {
             if(last == '+' || last == '-' || last == '*' || last == '/') {
-                printf("Error: Invalid Expression\n");
-                possible = 0;
+                errorCode = 1;
                 break;
             }
             pushNum(&st, num);
             pushed = 1;
             num = 0;
-            possible = pushOp(&st, expression[i]);
+            pushInOpratorStack(&st, expression[i]);
             last = expression[i];
         }
         else {
-            printf("Error: Invalid Expression\n");
-            possible = 0;
+            errorCode = 1;
         }
         i++;
         while(expression[i] != '\0' && expression[i] == ' ') i++;
     }
-    if(possible) {
+    if(errorCode == 0) {
         if(!pushed) {
             pushNum(&st, num);
         }
-        while(st.opTop >= 0 && possible) {
-            possible = perform(&st);
-        }
-        if(possible) {
-            printf("%d\n", st.numbers[0]);
+        while(st.operatorStackTop >= 0 && errorCode == 0) {
+            performOpration(&st);
         }
     }
+    if(errorCode == 0) printf("%d\n", st.numbers[0]);
+    else if(errorCode == 1) printf("Error: Invalid Expression\n");
+    else if(errorCode == 2) printf("Error: Division by zero\n");
+    else printf("Error: Stack Overflow\n");
 
     return 0;
 }

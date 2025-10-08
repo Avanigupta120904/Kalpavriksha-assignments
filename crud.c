@@ -139,10 +139,10 @@ int main() {
                 removeUser();
                 break;
             case 5:
-                printf("Exiting...\n");
+                printf("Exiting the process!\n");
                 return 0;
             default:
-                printf("Try Again\n");
+                printf("Enter Valid Input\n");
         }
     }
 
