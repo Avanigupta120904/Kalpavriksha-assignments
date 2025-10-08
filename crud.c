@@ -53,12 +53,15 @@ void update() {
         return;
     }
 
-    int temp_id, found = 0;
+    int id, found = 0;
     printf("User id to update: ");
-    scanf("%d", &temp_id);
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input. Please enter a number.\n");
+        while (getchar() != '\n');
+    }
 
     while (fscanf(file, "%d %s %d", &user.id, user.name, &user.age) != EOF) {
-        if (user.id == temp_id) {
+        if (user.id == id) {
             found = 1;
             printf("Enter new name: ");
             scanf("%s", user.name);
@@ -77,7 +80,7 @@ void update() {
     if (found)
         printf("Updated!\n");
     else
-        printf("NO user with %d id\n", temp_id);
+        printf("NO user with %d id\n", id);
 }
 
 void removeUser() {
