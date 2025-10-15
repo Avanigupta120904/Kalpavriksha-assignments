@@ -32,10 +32,10 @@ void calculateGrades(struct Student *student) {
 
 void printDetails(struct Student *students, int *present, int currStudent) {
     if(currStudent > 100) return;
-    if(currStudent == 0) { // skip roll 0
+    if(currStudent == 0) { 
         printDetails(students, present, currStudent + 1);
         return;
-    }52
+    }
     if(present[currStudent] == 1) {
 
         printf("\nRoll: %d\n", students[currStudent].rollNo);
