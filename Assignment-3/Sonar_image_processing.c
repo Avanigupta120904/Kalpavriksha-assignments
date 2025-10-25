@@ -45,25 +45,23 @@ void applyFilter(int size, int *matrix) {
     int *currentRowBuffer = (int *)malloc(size * sizeof(int));
     int *previousRowBuffer = (int *)malloc(size * sizeof(int));
     for (int col = 0; col < size; col++)
-        previousRowBuffer[col] = *(matrix + 0 * size + col);
+        *(previousRowBuffer + col) = *(matrix + 0 * size + col);
     for (int row = 0; row < size; row++) {
         for (int col = 0; col < size; col++)
-            currentRowBuffer[col] = *(matrix + row * size + col);
+            *(currentRowBuffer + col) = *(matrix + row * size + col);
         for (int col = 0; col < size; col++) {
             int sum = 0;
             int neighborCount = 0;
             for (int dr = -1; dr <= 1; dr++) {
                 int neighborRow = row + dr;
                 if (neighborRow < 0 || neighborRow >= size) continue;
-
                 int *neighborRowPointer = (neighborRow == row - 1) ? previousRowBuffer :
                                           (neighborRow == row) ? currentRowBuffer :
                                                                  matrix + neighborRow * size;
-
                 for (int dc = -1; dc <= 1; dc++) {
                     int neighborCol = col + dc;
                     if (neighborCol >= 0 && neighborCol < size) {
-                        sum += neighborRowPointer[neighborCol];
+                        sum += *(neighborRowPointer + neighborCol);
                         neighborCount++;
                     }
                 }
@@ -72,7 +70,7 @@ void applyFilter(int size, int *matrix) {
             *(matrix + row * size + col) = sum / neighborCount;
         }
         for (int col = 0; col < size; col++)
-            previousRowBuffer[col] = currentRowBuffer[col];
+            *(previousRowBuffer + col) = *(currentRowBuffer + col);
     }
 
     free(currentRowBuffer);
