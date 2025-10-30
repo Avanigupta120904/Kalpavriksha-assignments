@@ -283,7 +283,11 @@ int main() {
     break; 
     }
 
-    struct Product *myProducts = NULL;
+    struct Product *myProducts = calloc(totalNumberOfProducts, sizeof(struct Product));
+    if (myProducts == NULL) {
+    printf("Memory allocation failed! Exiting program.\n");
+    return 1;
+    }
     int count = 0;
         for (int i = 0; i < totalNumberOfProducts; i++) {
             printf("\nEnter details for product %d ::\n", i + 1);
