@@ -28,6 +28,7 @@ typedef struct FileNode{
 
 char virtualDisk[MAX_NUM_BLOCKS][MAX_BLOCK_SIZE];
 FreeBlock* freeListHead = NULL;
+FreeBlock* freeListTail = NULL;
 FileNode* root = NULL;
 FileNode* cwd = NULL;
 
@@ -49,6 +50,7 @@ void initializeFreeBlock(){
 
         previous = block;
     }
+    freeListTail = previous; 
 }
 
 void initializeFileSystem() {
@@ -63,7 +65,16 @@ void initializeFileSystem() {
     root->contentSize = 0;
     root->numOfBlocks = 0;
     cwd = root;
-    printf("Compact VFS - ready. Type 'exit' to quit.\n");
+    printf("\n=========================================\n");
+    printf("Compact Virtual File System (VFS)\n");
+    printf("=========================================\n");
+    printf("System initialized successfully.\n");
+    printf("Root directory created: /\n");
+    printf("All %d blocks are free and ready for use.\n", MAX_NUM_BLOCKS);
+    printf("Type 'help' to see available commands.\n");
+    printf("Type 'exit' to quit the program.\n");
+    printf("=========================================\n\n");
+
 }
 
 int allocateFreeBlock(){
@@ -76,6 +87,8 @@ int allocateFreeBlock(){
     freeListHead = freeListHead->next;
     if(freeListHead){
         freeListHead->prev = NULL;
+    } else {
+        freeListTail = NULL; // 👈 List became empty
     }
     free(allocatedBlock);
     return index;
@@ -88,19 +101,14 @@ void freeFileBlocks(FileNode* file){
             FreeBlock* newFreeBlock = (FreeBlock*)malloc(sizeof(FreeBlock));
             newFreeBlock->index = blockIndex;
             newFreeBlock->next = NULL;
-            newFreeBlock->prev = NULL;
+            newFreeBlock->prev = freeListTail;
 
-            if(freeListHead == NULL){
-                freeListHead = newFreeBlock;
+            if(freeListTail){
+                freeListTail->next = newFreeBlock;
+            } else {
+                freeListHead = newFreeBlock; // first block in list
             }
-            else {
-                FreeBlock* tail = freeListHead;
-                while(tail->next != NULL){
-                    tail = tail->next;
-                }
-                tail->next = newFreeBlock;
-                newFreeBlock->prev = tail;
-            }
+            freeListTail = newFreeBlock;
             file->blockPointers[index] = -1;
         }
     }
@@ -447,6 +455,7 @@ void freeFreeBlocks()
         temp = next;
     }
     freeListHead = NULL;
+    freeListTail = NULL;
 }
 
 void freeFileNodes(FileNode *node)
@@ -478,6 +487,28 @@ void exit_system()
     cwd = NULL;
     freeFreeBlocks();
     printf("Memory released. Exiting program...\n");
+}
+
+void showHelp() {
+    printf("\n");
+    printf("=========================================\n");
+    printf("    Compact Virtual File System (VFS)    \n");
+    printf("=========================================\n");
+    printf("Available Commands:\n");
+    printf("  mkdir <dirname>         - Create a new directory\n");
+    printf("  rmdir <dirname>         - Remove an empty directory\n");
+    printf("  cd <dirname>            - Change directory\n");
+    printf("  cd .. or cd..           - Go to parent directory\n");
+    printf("  ls                      - List files and directories\n");
+    printf("  create <filename>       - Create a new empty file\n");
+    printf("  write <file> \"data\"     - Write data to file (use quotes)\n");
+    printf("  read <filename>         - Read contents of a file\n");
+    printf("  delete <filename>       - Delete a file\n");
+    printf("  pwd                     - Show current directory path\n");
+    printf("  df                      - Show disk usage information\n");
+    printf("  help or ?               - Show this help menu\n");
+    printf("  exit                    - Exit and free memory\n");
+    printf("=========================================\n\n");
 }
 
 void takeInput(){
@@ -563,16 +594,26 @@ void takeInput(){
         exit_system();
         exit(0);
     }
+    else if(strcmp(command, "help") == 0 || strcmp(command, "?") == 0){
+        showHelp();
+    }
+
     else{
         printf("Invalid command.\n");
     }
 }
 
-int main(){
+int main() {
+    printf("Initializing Compact Virtual File System...\n");
     initializeFileSystem();
-    while (1)
-    {
+    printf("VFS setup complete.\n\n");
+    showHelp();
+
+    while (1) {
+        printf("[LOG] Waiting for user input...\n");
         takeInput();
+        printf("[LOG] Command executed successfully.\n\n");
     }
+
     return 0;
 }
